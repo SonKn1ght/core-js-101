@@ -209,7 +209,6 @@ function getRectangleString(width, height) {
   return `${firstRow}${row.repeat(height - 2)}${lastRow}`;
 }
 
-
 /**
  * Encode specified string with ROT13 cipher
  * See details:  https://en.wikipedia.org/wiki/ROT13
