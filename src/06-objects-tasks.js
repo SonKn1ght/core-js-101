@@ -20,8 +20,12 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  return {
+    width,
+    height,
+    getArea: () => width * height,
+  };
 }
 
 
@@ -35,8 +39,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +55,8 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  return Object.assign(Object.create(proto), JSON.parse(json));
 }
 
 
@@ -110,36 +114,133 @@ function fromJSON(/* proto, json */) {
  *  For more examples see unit tests.
  */
 
+class BuilderCss {
+  constructor() {
+    this.elementValue = '';
+    this.idValue = '';
+    this.classValue = '';
+    this.attrValue = '';
+    this.pseudoClassValue = '';
+    this.pseudoElementValue = '';
+    this.combineValue = '';
+
+    this.isElement = false;
+    this.isId = false;
+    this.isClassValue = false;
+    this.isAttrValue = false;
+    this.isPseudoClass = false;
+    this.isPseudoElement = false;
+    this.isCombine = false;
+  }
+
+
+  error() {
+    this.isCombine = true;
+    throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+  }
+
+  errorOrder() {
+    this.isCombine = true;
+    throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+  }
+
+  element(value) {
+    if (this.isElement) {
+      this.error();
+    }
+    if (this.isPseudoElement || this.isPseudoClass
+      || this.isAttrValue || this.isClassValue || this.isId) this.errorOrder();
+    this.isElement = !this.isElement;
+    this.elementValue += value;
+    return this;
+  }
+
+  id(value) {
+    if (this.isId) {
+      this.error();
+    }
+    if (this.isPseudoElement || this.isPseudoClass
+      || this.isAttrValue || this.isClassValue) this.errorOrder();
+    this.isId = true;
+    this.idValue += `#${value}`;
+    return this;
+  }
+
+  class(value) {
+    if (this.isPseudoElement || this.isPseudoClass || this.isAttrValue) this.errorOrder();
+    this.isClassValue = true;
+    this.classValue += `.${value}`;
+    return this;
+  }
+
+  attr(value) {
+    if (this.isPseudoElement || this.isPseudoClass) this.errorOrder();
+    this.isAttrValue = true;
+    this.attrValue += `[${value}]`;
+    return this;
+  }
+
+  pseudoClass(value) {
+    if (this.isPseudoElement) this.errorOrder();
+    this.isPseudoClass = true;
+    this.pseudoClassValue += `:${value}`;
+    return this;
+  }
+
+  pseudoElement(value) {
+    if (this.isPseudoElement) {
+      this.error();
+    }
+    this.isPseudoElement = true;
+    this.pseudoElementValue += `::${value}`;
+    return this;
+  }
+
+  combine(selector1, combinator, selector2) {
+    this.isCombine = true;
+    this.combineValue = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return this;
+  }
+
+  stringify() {
+    if (this.isCombine) {
+      return this.combineValue;
+    }
+    return `${this.elementValue}${this.idValue}${this.classValue}${this.attrValue}${this.pseudoClassValue}${this.pseudoElementValue}`;
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  combineCount: 0,
+
+  element(value) {
+    return new BuilderCss().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new BuilderCss().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new BuilderCss().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new BuilderCss().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new BuilderCss().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new BuilderCss().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return new BuilderCss().combine(selector1, combinator, selector2);
   },
 };
-
 
 module.exports = {
   Rectangle,
